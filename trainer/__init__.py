@@ -16,13 +16,14 @@ __VERSION__ = '20200329.01'
 class Trainer:
     def __init__(self, urls: typing.Set[str]=None, concurrent: int=50,
                  dict_size: int=1024**2, k: int=100000, d: int=9,
-                 level: int=9):
+                 level: int=9, compress: int=True):
         self._urls = urls or set()
         self._concurrent = concurrent
         self._k = k
         self._d = d
         self._max_dict_size = dict_size
         self._level = level
+        self._compress = compress
 
     def add_url(self, url: str):
         self._urls.add(url)
@@ -33,6 +34,7 @@ class Trainer:
         del self.dictionary
         del self.io
         del self.hash
+        del self.compressed
 
     def upload(self, filename: str, itemname: str) -> typing.Dict[str, str]:
         return {
@@ -51,12 +53,18 @@ class Trainer:
 
     @functools.cached_property
     def sha256(self) -> str:
-        return hashlib.sha256(self.dictionary.as_bytes()).hexdigest()
+        if self._compress:
+            return hashlib.sha256(self.compressed).hexdigest()
+        else:
+            return hashlib.sha256(self.dictionary.as_bytes()).hexdigest()
 
     @functools.cached_property
     def _io(self) -> typing.BinaryIO:
         bytes_io = io.BytesIO()
-        bytes_io.write(self.dictionary.as_bytes())
+        if self._compress:
+            bytes_io.write(self.compressed)
+        else:
+            bytes_io.write(self.dictionary.as_bytes())
         return bytes_io
 
     @functools.cached_property
@@ -71,6 +79,10 @@ class Trainer:
     def dictionary(self) -> zstandard.ZstdCompressionDict:
         return train(self.train_data, self._max_dict_size, self._k, self._d,
                      self._level)
+
+    @functools.cached_property
+    def compressed(self) -> bytes:
+        return zstandard.ZstdCompressor().compress(self.dictionary.as_bytes())
 
     @property
     def dict_size(self) -> int:

@@ -14,11 +14,11 @@ app = flask.Flask(__name__)
 def dictionary():
     if 'project' not in flask.request.args:
         return flask.Response('Project name should be given.', status=400)
-    if 'version' in flask.request.args:
-        if not flask.request.args['version'].isnumeric():
-            return flask.Response('Version should be a number.', status=400)
+    if 'id' in flask.request.args:
+        if not flask.request.args['id'].isnumeric():
+            return flask.Response('ID should be a number.', status=400)
         result = get_dictionary_url(flask.request.args['project'],
-                                    int(flask.request.args['version']))
+                                    int(flask.request.args['id']))
     else:
         result = get_latest_dictionary_url(flask.request.args['project'])
     return flask.Response(json.dumps(result), status=200,

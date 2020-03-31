@@ -39,7 +39,7 @@ def main(collection: str, name: str):
     t = Trainer(urls)
     identifier = str(int(time.time()))
     filename_base = collection + '_dictionary_' + identifier
-    upload_urls = t.upload(filename_base + '.zstdict', filename_base)
+    upload_urls = t.upload(filename_base + '.zstdict.zst', filename_base)
     print(upload_urls)
     add_entry(identifier, name, t.sha256, upload_urls['public_url'],
               upload_urls['backup_url'])
@@ -55,6 +55,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     thread = run_dashboard(args.port)
     while True:
-        main(args.collection, args.name)
+        try:
+            main(args.collection, args.name)
+        except Exception as e:
+            print('Could not train new dictionary.', str(e))
+            time.sleep(300)
+            continue
         time.sleep(3600)
 
