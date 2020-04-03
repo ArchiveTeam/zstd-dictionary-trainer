@@ -21,7 +21,7 @@ def upload_file(function):
 
 @upload_file
 def upload_to_backup(data: typing.BinaryIO, filename: str, itemname: str,
-                     collection: str='test_collection'):
+                     collection: str='archiveteam_inbox'):
     with mock.patch('internetarchive.item.recursive_file_count',
                     lambda files, *args, **kwargs: len(files)):
         response = internetarchive.upload(
