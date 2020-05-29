@@ -3,20 +3,61 @@ import gzip
 import io
 import multiprocessing.dummy
 import random
+import struct
+import threading
 import typing
 
+import internetarchive
 import requests
+import zstandard
+
+dictionary_lock = threading.Lock()
 
 
-def archive_url(data: typing.Dict[str, bytes], url: str):
-    data[url] = requests.get(url, allow_redirects=False).content
+@functools.lru_cache()
+def get_dictionary(filename: str) -> zstandard.ZstdCompressionDict:
+    s = internetarchive.get_session()
+    r = s.get(
+        'https://archive.org/download/' + filename,
+        headers={'Range': 'bytes=0-7'}
+    )
+    if r.content[:4] != b'\x5D\x2A\x4D\x18':
+        return None
+    data_size = struct.unpack('<L', r.content[4:])[0]
+    r = s.get(
+        'https://archive.org/download/' + filename,
+        headers={'Range': 'bytes=8-{}'.format(8+data_size-1)}
+    )
+    dictionary = r.content
+    if r.content[:4] == b'\x28\xB5\x2F\xFD':
+        dictionary = zstandard.ZstdDecompressor().decompress(dictionary)
+    if dictionary[:4] != b'\x37\xA4\x30\xEC':
+        raise ValueError('Not a dictionary.')
+    return zstandard.ZstdCompressionDict(dictionary)
+
+
+def archive_url(data: typing.Dict[str, bytes],
+                url_data: typing.Tuple[str, int, int, str, bool]):
+    url, offset, length, filename, redownload = url_data
+    if redownload:
+        data[url] = requests.get(url, allow_redirects=False).content
+    else:
+        if filename.endswith('.zst'):
+            with dictionary_lock:
+                dictionary = get_dictionary(filename)
+        r = internetarchive.get_session().get(
+            'https://archive.org/download/' + filename,
+            headers={'Range': 'bytes={}-{}'.format(offset, offset+length-1)}
+        )
+        data[url] = zstandard.ZstdDecompressor(dict_data=dictionary) \
+            .decompressobj().decompress(r.content)
     print(len(data[url]), url)
 
 
 def get_urls(urls: typing.Iterable[str],
-             concurrent: int) -> typing.Dict[str, bytes]:
+             concurrency: int) -> typing.Dict[str, bytes]:
     data = {}
-    with multiprocessing.dummy.Pool(concurrent) as p:
+    with multiprocessing.dummy.Pool(concurrency) as p:
         p.starmap(archive_url, ((data, url) for url in urls))
     return data
 
@@ -36,7 +77,8 @@ def list_urls(urls: typing.Optional[typing.Set[str]],
     return frozenset(urls)
 
 
-def from_cdx(data: typing.IO, sample_size: int=4000) -> typing.Set[str]:
+def from_cdx(data: typing.IO, sample_size: int=4000,
+             redownload: bool=False) -> typing.Set[str]:
     all_data = set()
     original_url_index = None
     mimetype_index = None
@@ -48,9 +90,18 @@ def from_cdx(data: typing.IO, sample_size: int=4000) -> typing.Set[str]:
             print(line)
             original_url_index = line.index('a') - 1
             mimetype_index = line.index('m') - 1
+            offset_index = line.index('V') - 1
+            length_index = line.index('S') - 1
+            file_index = line.index('g') - 1
             continue
         if line[mimetype_index] in ('text/html', 'application/json'):
-            all_data.add(line[original_url_index])
+            all_data.add((
+                line[original_url_index],
+                int(line[offset_index]),
+                int(line[length_index]),
+                line[file_index],
+                redownload
+            ))
     return set(random.sample(all_data, min(len(all_data), sample_size)))
 
 

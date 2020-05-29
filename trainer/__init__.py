@@ -14,11 +14,11 @@ __VERSION__ = '20200329.01'
 
 
 class Trainer:
-    def __init__(self, urls: typing.Set[str]=None, concurrent: int=50,
+    def __init__(self, urls: typing.Set[str]=None, concurrency: int=50,
                  dict_size: int=1024**2, k: int=100000, d: int=9,
                  level: int=9, compress: int=True):
         self._urls = urls or set()
-        self._concurrent = concurrent
+        self._concurrency = concurrency
         self._k = k
         self._d = d
         self._max_dict_size = dict_size
@@ -69,7 +69,7 @@ class Trainer:
 
     @functools.cached_property
     def train_data(self) -> typing.Dict[str, bytes]:
-        return get_urls(self.urls, self._concurrent)
+        return get_urls(self.urls, self._concurrency)
 
     @property
     def urls(self) -> typing.Set[str]:

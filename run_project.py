@@ -15,7 +15,11 @@ def cdx_url(collection: str) -> str:
     response = session.get(
         'https://archive.org/advancedsearch.php',
         params={
-            'q': 'collection:{} AND format:Item CDX Index'.format(collection),
+            'q': (
+                'collection:archiveteam* '
+                'AND format:(Item CDX Index) '
+                'AND identifier:{}*'.format(collection)
+            ),
             'fl[]': 'identifier',
             'sort[]': 'addeddate desc',
             'rows': '1',
@@ -34,9 +38,9 @@ def run_dashboard(port: int) -> threading.Thread:
     return thread
 
 
-def main(collection: str, name: str):
+def main(collection: str, name: str, concurrency: int):
     urls = from_cdx_url(cdx_url(collection), session=internetarchive.get_session())
-    t = Trainer(urls)
+    t = Trainer(urls, concurrency=concurrency)
     identifier = str(int(time.time()))
     filename_base = collection + '_dictionary_' + identifier
     upload_urls = t.upload(filename_base + '.zstdict.zst', filename_base)
@@ -52,11 +56,13 @@ if __name__ == '__main__':
                         help='Name of the project.')
     parser.add_argument('-p', '--port', default=25654, type=int,
                         help='Port to use for the dashboard')
+    parser.add_argument('--concurrency', default=50, type=int,
+                        help='Concurrency to download WARC samples with.')
     args = parser.parse_args()
     thread = run_dashboard(args.port)
     while True:
         try:
-            main(args.collection, args.name)
+            main(args.collection, args.name, args.concurrency)
         except Exception as e:
             print('Could not train new dictionary.', str(e))
             time.sleep(300)
