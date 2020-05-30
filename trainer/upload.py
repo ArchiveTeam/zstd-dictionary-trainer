@@ -38,7 +38,7 @@ def upload_to_backup(data: typing.BinaryIO, filename: str, itemname: str,
             verify=True,
             verbose=True,
             delete=False,
-            retries=10,
+            retries=30,
             retries_sleep=10
         )
         response[0].raise_for_status()

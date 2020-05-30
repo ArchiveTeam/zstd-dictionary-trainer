@@ -1,6 +1,8 @@
 import functools
 import hashlib
 import io
+import random
+import string
 import struct
 import typing
 
@@ -87,6 +89,23 @@ class Trainer:
     @property
     def dict_size(self) -> int:
         return len(self.dictionary.as_bytes())
+
+
+class DummyTrainer(Trainer):
+    def __init__(self, dummy_text: str='dummy'):
+        super().__init__()
+        self._data = [
+            bytes(
+                dummy_text + ''.join(
+                    random.choices(string.digits, k=1024-len(dummy_text))
+                ),
+                'utf8'
+            )
+        ] * 32
+
+    @functools.cached_property
+    def dictionary(self) -> zstandard.ZstdCompressionDict:
+        return zstandard.train_dictionary(1024, self._data)
 
 
 def dump(dictionary: zstandard.ZstdCompressionDict,

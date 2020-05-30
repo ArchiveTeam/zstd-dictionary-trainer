@@ -6,7 +6,7 @@ import internetarchive
 
 from dashboard import run
 from dashboard.database import add_entry
-from trainer import Trainer
+from trainer import Trainer, DummyTrainer
 from trainer.urls import from_cdx_url
 
 
@@ -38,9 +38,12 @@ def run_dashboard(port: int) -> threading.Thread:
     return thread
 
 
-def main(collection: str, name: str, concurrency: int):
-    urls = from_cdx_url(cdx_url(collection), session=internetarchive.get_session())
-    t = Trainer(urls, concurrency=concurrency)
+def main(collection: str, name: str, concurrency: int, dummy: bool=False):
+    if dummy:
+        t = DummyTrainer()
+    else:
+        urls = from_cdx_url(cdx_url(collection), session=internetarchive.get_session())
+        t = Trainer(urls, concurrency=concurrency)
     identifier = str(int(time.time()))
     filename_base = collection + '_dictionary_' + identifier
     upload_urls = t.upload(filename_base + '.zstdict.zst', filename_base)
@@ -58,11 +61,14 @@ if __name__ == '__main__':
                         help='Port to use for the dashboard')
     parser.add_argument('--concurrency', default=50, type=int,
                         help='Concurrency to download WARC samples with.')
+    parser.add_argument('--init-project', action='store_true',
+                        help='Init dummy ZSTD dictionary for project.')
     args = parser.parse_args()
     thread = run_dashboard(args.port)
     while True:
         try:
-            main(args.collection, args.name, args.concurrency)
+            main(args.collection, args.name, args.concurrency,
+                 args.init_project)
         except Exception as e:
             print('Could not train new dictionary.', str(e))
             time.sleep(300)
