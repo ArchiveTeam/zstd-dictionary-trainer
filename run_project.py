@@ -63,15 +63,22 @@ if __name__ == '__main__':
                         help='Concurrency to download WARC samples with.')
     parser.add_argument('--init-project', action='store_true',
                         help='Init dummy ZSTD dictionary for project.')
+    parser.add_argument('--dashboard', action='store_true',
+                        help='Run a dashboard.')
+    parser.add_argument('--refresh', default=3600, type=int,
+                        help='How often to train a new dictionary.')
     args = parser.parse_args()
-    thread = run_dashboard(args.port)
+    if args.dashboard:
+        thread = run_dashboard(args.port)
     while True:
         try:
             main(args.collection, args.name, args.concurrency,
                  args.init_project)
+            if args.init_project:
+                break
         except Exception as e:
             print('Could not train new dictionary.', str(e))
             time.sleep(300)
             continue
-        time.sleep(3600)
+        time.sleep(args.refresh)
 
