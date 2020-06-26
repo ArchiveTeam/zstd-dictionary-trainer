@@ -94,7 +94,11 @@ def from_cdx(data: typing.IO, sample_size: int=4000,
             length_index = line.index('S') - 1
             file_index = line.index('g') - 1
             continue
-        if line[mimetype_index] in ('text/html', 'application/json'):
+        if line[mimetype_index] in (
+            'text/html',
+            'application/json',
+            'text/xml'
+        ):
             all_data.add((
                 line[original_url_index],
                 int(line[offset_index]),
