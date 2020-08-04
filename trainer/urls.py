@@ -86,7 +86,7 @@ def list_urls(urls: typing.Optional[typing.Set[str]],
 
 def from_cdx(data: typing.IO, sample_size: int=4000,
              redownload: bool=False) -> typing.Set[str]:
-    all_data = set()
+    all_data = []
     original_url_index = None
     mimetype_index = None
     for line in data:
@@ -106,7 +106,7 @@ def from_cdx(data: typing.IO, sample_size: int=4000,
             'application/json',
             'text/xml'
         ):
-            all_data.add((
+            all_data.append((
                 line[original_url_index],
                 int(line[offset_index]),
                 int(line[length_index]),
