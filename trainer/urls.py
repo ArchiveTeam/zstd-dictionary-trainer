@@ -49,8 +49,15 @@ def archive_url(data: typing.Dict[str, bytes],
             'https://archive.org/download/' + filename,
             headers={'Range': 'bytes={}-{}'.format(offset, offset+length-1)}
         )
-        data[url] = zstandard.ZstdDecompressor(dict_data=dictionary) \
-            .decompressobj().decompress(r.content)
+        if filename.endswith('.zst'):
+            data[url] = zstandard.ZstdDecompressor(dict_data=dictionary) \
+                .decompressobj().decompress(r.content)
+        elif filename.endswith('.gz'):
+            data[url] = gzip.decompress(r.content)
+        elif filename.endswith('.warc'):
+            data[url] = r.content
+        else:
+            raise ValueError('WARC type not supported.')
     print(len(data[url]), url)
 
 
