@@ -106,7 +106,7 @@ def from_cdx(data: typing.IO, sample_size: int=4000,
                 line[file_index],
                 redownload
             ))
-    return set(random.sample(all_data, min(len(all_data), sample_size)))
+    return set(random.choices(all_data, k=min(len(all_data), sample_size)))
 
 
 def from_cdx_url(url: str, session=requests) -> typing.Set[str]:
