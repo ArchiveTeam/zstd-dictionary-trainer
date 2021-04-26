@@ -23,7 +23,8 @@ def cdx_url(collection: str) -> str:
             'fl[]': 'identifier',
             'sort[]': 'addeddate desc',
             'rows': '1',
-            'output': 'json'
+            'output': 'json',
+            'scope': 'all'
         }
     ).json()
     print(response)

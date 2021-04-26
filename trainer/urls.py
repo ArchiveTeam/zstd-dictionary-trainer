@@ -132,6 +132,5 @@ def from_cdx_file(filepath: str) -> typing.Set[str]:
     with open(filepath, 'rb') as f:
         return from_cdx(f)
 
-__all__ = ('process_urls', 'get_urls', 'from_cdx', 'from_cdx_url',
-           'from_cdx_file')
+__all__ = ('get_urls', 'from_cdx', 'from_cdx_url','from_cdx_file')
 

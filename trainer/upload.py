@@ -6,7 +6,7 @@ import internetarchive
 import mock
 import requests
 
-MAIN_URL_BASE = 'https://transfer.notkiska.pw/'
+MAIN_URL_BASE = 'https://transfer.archivete.am/'
 
 
 def upload_file(function):
