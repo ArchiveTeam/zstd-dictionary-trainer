@@ -39,9 +39,10 @@ def run_dashboard(port: int) -> threading.Thread:
     return thread
 
 
-def main(collection: str, name: str, concurrency: int, dummy: bool=False):
+def main(collection: str, name: str, concurrency: int, dummy: bool=False,
+         dummy_text: str=None):
     if dummy:
-        t = DummyTrainer()
+        t = DummyTrainer(dummy_text)
     else:
         urls = from_cdx_url(cdx_url(collection), session=internetarchive.get_session())
         t = Trainer(urls, concurrency=concurrency)
@@ -64,6 +65,8 @@ if __name__ == '__main__':
                         help='Concurrency to download WARC samples with.')
     parser.add_argument('--init-project', action='store_true',
                         help='Init dummy ZSTD dictionary for project.')
+    parser.add_argument('--init-text', default='dummy', type=str,
+                        help='The text to initiate the dictionary with.')
     parser.add_argument('--dashboard', action='store_true',
                         help='Run a dashboard.')
     parser.add_argument('--refresh', default=3600, type=int,
@@ -74,7 +77,7 @@ if __name__ == '__main__':
     while True:
         try:
             main(args.collection, args.name, args.concurrency,
-                 args.init_project)
+                 args.init_project, args.init_text)
             if args.init_project:
                 break
         except Exception as e:
