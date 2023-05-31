@@ -116,13 +116,13 @@ def from_cdx(data: typing.IO, sample_size: int=4000,
     return set(random.choices(all_data, k=min(len(all_data), sample_size)))
 
 
-def from_cdx_url(url: str, session=requests) -> typing.Set[str]:
+def from_cdx_url(url: str, session=requests, sample_size: int=4000) -> typing.Set[str]:
     response = session.get(url)
     response.raise_for_status()
     data = response.content
     if data.startswith(b'\x1F\x8B'):
         data = gzip.decompress(data)
-    return from_cdx(io.BytesIO(data))
+    return from_cdx(io.BytesIO(data), sample_size=sample_size)
 
 
 def from_cdx_file(filepath: str) -> typing.Set[str]:
