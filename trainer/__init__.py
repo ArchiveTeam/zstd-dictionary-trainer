@@ -12,7 +12,7 @@ from trainer.test import test
 from trainer.upload import upload_to_public, upload_to_backup
 from trainer.urls import get_urls
 
-__VERSION__ = '20210426.01'
+__VERSION__ = '20230531.01'
 
 
 class Trainer:

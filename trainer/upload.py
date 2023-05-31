@@ -51,5 +51,6 @@ def upload_to_public(data: typing.BinaryIO, filename: str) -> str:
     response.raise_for_status()
     return response.text
 
+
 __all__ = ('upload_to_backup', 'upload_to_public')
 
